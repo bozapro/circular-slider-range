@@ -75,6 +75,7 @@ public class CircularSliderRange extends View {
     private int mBorderThickness;
     private int mArcDashSize;
     private int mArcColor;
+    private LineCap mLineCap;
     private double mAngle;
     private double mAngleEnd;
     private boolean mIsThumbSelected = false;
@@ -89,6 +90,37 @@ public class CircularSliderRange extends View {
 
     private enum Thumb {
         START, END
+    }
+
+    public enum LineCap {
+        BUTT(0),
+        ROUND(1),
+        SQUARE(2);
+
+        int id;
+
+        LineCap(int id) {
+            this.id = id;
+        }
+
+        static LineCap fromId(int id) {
+            for (LineCap lc : values()) {
+                if (lc.id == id) return lc;
+            }
+            throw new IllegalArgumentException();
+        }
+
+        public Paint.Cap getPaintCap() {
+            switch (this) {
+                case BUTT:
+                default:
+                    return Paint.Cap.BUTT;
+                case ROUND:
+                    return Paint.Cap.ROUND;
+                case SQUARE:
+                    return Paint.Cap.SQUARE;
+            }
+        }
     }
 
     public CircularSliderRange(Context context) {
@@ -128,6 +160,7 @@ public class CircularSliderRange extends View {
         int borderColor = a.getColor(R.styleable.CircularSlider_border_color, Color.RED);
         Drawable thumbImage = a.getDrawable(R.styleable.CircularSlider_start_thumb_image);
         Drawable thumbEndImage = a.getDrawable(R.styleable.CircularSlider_end_thumb_image);
+        LineCap lineCap = LineCap.fromId(a.getInt(R.styleable.CircularSlider_line_cap, 0));
 
         // save those to fields (really, do we need setters here..?)
         setStartAngle(startAngle);
@@ -143,6 +176,7 @@ public class CircularSliderRange extends View {
         setEndThumbColor(thumbEndColor);
         setArcColor(arcColor);
         setArcDashSize(arcDashSize);
+        setLineCap(lineCap);
 
         // assign padding - check for version because of RTL layout compatibility
         int padding;
@@ -242,6 +276,8 @@ public class CircularSliderRange extends View {
         mArcDashSize = value;
     }
 
+    public void setLineCap(LineCap value) { mLineCap = value; }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         // use smaller dimension for calculations (depends on parent size)
@@ -286,6 +322,7 @@ public class CircularSliderRange extends View {
         mLinePaint.setStrokeWidth(mArcDashSize);
         mLinePaint.setAntiAlias(true);
         mLinePaint.setTextSize(50);
+        mLinePaint.setStrokeCap(mLineCap.getPaintCap());
 
         arcRect.set(mCircleCenterX - mCircleRadius, mCircleCenterY + mCircleRadius, mCircleCenterX + mCircleRadius, mCircleCenterY - mCircleRadius);
         arcRectF.set(arcRect);

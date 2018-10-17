@@ -15,6 +15,11 @@
         <attr name="end_thumb_color" format="color" />
         <attr name="arc_color" format="color" />
         <attr name="arc_dash_size" format="dimension" />
+        <attr name="line_cap" format="enum">
+            <enum name="BUTT" value="0"/>
+            <enum name="ROUND" value="1"/>
+            <enum name="SQUARE" value="2"/>
+        </attr>
     </declare-styleable>
 
 </resources>

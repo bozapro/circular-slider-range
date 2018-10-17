@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.SweepGradient;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -72,6 +73,7 @@ public class CircularSliderRange extends View {
     private int mStartThumbColor;
     private int mEndThumbColor;
     private int mBorderColor;
+    private int[] mBorderGradientColors;
     private int mBorderThickness;
     private int mArcDashSize;
     private int mArcColor;
@@ -82,6 +84,7 @@ public class CircularSliderRange extends View {
     private boolean mIsThumbEndSelected = false;
 
     private Paint mPaint = new Paint();
+    private SweepGradient mGradientShader;
     private Paint mLinePaint = new Paint();
     private RectF arcRectF = new RectF();
     private Rect arcRect = new Rect();
@@ -158,6 +161,7 @@ public class CircularSliderRange extends View {
         int arcDashSize = a.getDimensionPixelSize(R.styleable.CircularSlider_arc_dash_size, 60);
         int arcColor = a.getColor(R.styleable.CircularSlider_arc_color, 0);
         int borderColor = a.getColor(R.styleable.CircularSlider_border_color, Color.RED);
+        String borderGradientColors = a.getString(R.styleable.CircularSlider_border_gradient_colors);
         Drawable thumbImage = a.getDrawable(R.styleable.CircularSlider_start_thumb_image);
         Drawable thumbEndImage = a.getDrawable(R.styleable.CircularSlider_end_thumb_image);
         LineCap lineCap = LineCap.fromId(a.getInt(R.styleable.CircularSlider_line_cap, 0));
@@ -167,6 +171,9 @@ public class CircularSliderRange extends View {
         setEndAngle(endAngle);
         setBorderThickness(borderThickness);
         setBorderColor(borderColor);
+        if (borderGradientColors != null) {
+            setBorderGradientColors(borderGradientColors.split(";"));
+        }
         setThumbSize(thumbSize);
         setStartThumbSize(startThumbSize);
         setEndThumbSize(endThumbSize);
@@ -248,6 +255,17 @@ public class CircularSliderRange extends View {
         mBorderColor = color;
     }
 
+    public void setBorderGradientColors(String[] colors) {
+        mBorderGradientColors = new int[colors.length];
+        for (int i = 0; i < colors.length; i++) {
+            mBorderGradientColors[i] = Color.parseColor(colors[i]);
+        }
+    }
+
+    public void setBorderGradientColors(int[] colors) {
+        mBorderGradientColors = colors.clone();
+    }
+
     public void setStartThumbImage(Drawable drawable) {
         mStartThumbImage = drawable;
     }
@@ -294,6 +312,11 @@ public class CircularSliderRange extends View {
         mCircleCenterY = largestCenteredSquareBottom / 2 + (h - largestCenteredSquareBottom) / 2;
         mCircleRadius = smallerDim / 2 - mBorderThickness / 2 - mPadding;
 
+        if (mBorderGradientColors != null) {
+            mGradientShader =
+                    new SweepGradient(mCircleRadius, mCircleRadius, mBorderGradientColors, null);
+        }
+
         // works well for now, should we call something else here?
         super.onSizeChanged(w, h, oldw, oldh);
     }
@@ -307,6 +330,9 @@ public class CircularSliderRange extends View {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeWidth(mBorderThickness);
         mPaint.setAntiAlias(true);
+        if (mGradientShader != null) {
+            mPaint.setShader(mGradientShader);
+        }
         canvas.drawCircle(mCircleCenterX, mCircleCenterY, mCircleRadius, mPaint);
 
         // find thumb start position

@@ -14,11 +14,18 @@
         <attr name="start_thumb_color" format="color" />
         <attr name="end_thumb_color" format="color" />
         <attr name="arc_color" format="color" />
+        <attr name="arc_start_color" format="color" />
+        <attr name="arc_end_color" format="color" />
         <attr name="arc_dash_size" format="dimension" />
         <attr name="line_cap" format="enum">
             <enum name="BUTT" value="0"/>
             <enum name="ROUND" value="1"/>
             <enum name="SQUARE" value="2"/>
+        </attr>
+        <attr name="tile_mode" format="enum">
+            <enum name="CLAMP" value="0"/>
+            <enum name="MIRROR" value="1"/>
+            <enum name="REPEAT" value="2"/>
         </attr>
     </declare-styleable>
 

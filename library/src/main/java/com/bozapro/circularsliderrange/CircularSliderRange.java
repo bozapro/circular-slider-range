@@ -6,13 +6,14 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -75,6 +76,9 @@ public class CircularSliderRange extends View {
     private int mBorderThickness;
     private int mArcDashSize;
     private int mArcColor;
+    private int mArcStartColor;
+    private int mArcEndColor;
+    private TileMode mTileMode;
     private LineCap mLineCap;
     private double mAngle;
     private double mAngleEnd;
@@ -90,6 +94,39 @@ public class CircularSliderRange extends View {
 
     private enum Thumb {
         START, END
+    }
+
+    public enum TileMode {
+        CLAMP(0),
+        MIRROR(1),
+        REPEAT(2);
+
+        int id;
+
+        TileMode(int id) {
+            this.id = id;
+        }
+
+        static TileMode fromId(int id) {
+            for (TileMode tm : values()) {
+                if (tm.id == id) return tm;
+            }
+            throw new IllegalArgumentException();
+        }
+
+        public Shader.TileMode getTileMode() {
+            switch (this) {
+                case CLAMP:
+                default:
+                    return Shader.TileMode.CLAMP;
+                case MIRROR:
+                    return Shader.TileMode.MIRROR;
+                case REPEAT:
+                    return Shader.TileMode.REPEAT;
+            }
+        }
+
+
     }
 
     public enum LineCap {
@@ -157,10 +194,13 @@ public class CircularSliderRange extends View {
         int borderThickness = a.getDimensionPixelSize(R.styleable.CircularSlider_border_thickness, 20);
         int arcDashSize = a.getDimensionPixelSize(R.styleable.CircularSlider_arc_dash_size, 60);
         int arcColor = a.getColor(R.styleable.CircularSlider_arc_color, 0);
+        int arcStartColor = a.getColor(R.styleable.CircularSlider_arc_start_color, 0);
+        int arcEndColor = a.getColor(R.styleable.CircularSlider_arc_end_color, 0);
         int borderColor = a.getColor(R.styleable.CircularSlider_border_color, Color.RED);
         Drawable thumbImage = a.getDrawable(R.styleable.CircularSlider_start_thumb_image);
         Drawable thumbEndImage = a.getDrawable(R.styleable.CircularSlider_end_thumb_image);
         LineCap lineCap = LineCap.fromId(a.getInt(R.styleable.CircularSlider_line_cap, 0));
+        TileMode tileMode = TileMode.fromId(a.getInt(R.styleable.CircularSlider_tile_mode, 0));
 
         // save those to fields (really, do we need setters here..?)
         setStartAngle(startAngle);
@@ -175,9 +215,11 @@ public class CircularSliderRange extends View {
         setStartThumbColor(thumbColor);
         setEndThumbColor(thumbEndColor);
         setArcColor(arcColor);
+        setArcStartColor(arcStartColor);
+        setArcEndColor(arcEndColor);
         setArcDashSize(arcDashSize);
         setLineCap(lineCap);
-
+        setTileMode(tileMode);
         // assign padding - check for version because of RTL layout compatibility
         int padding;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -272,11 +314,25 @@ public class CircularSliderRange extends View {
         mArcColor = color;
     }
 
+    public void setArcStartColor(int color) {
+        mArcStartColor = color;
+    }
+
+    public void setArcEndColor(int color) {
+        mArcEndColor = color;
+    }
+
     public void setArcDashSize(int value) {
         mArcDashSize = value;
     }
 
-    public void setLineCap(LineCap value) { mLineCap = value; }
+    public void setLineCap(LineCap value) {
+        mLineCap = value;
+    }
+
+    public void setTileMode(TileMode value) {
+        mTileMode = value;
+    }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -317,7 +373,12 @@ public class CircularSliderRange extends View {
         mThumbEndX = (int) (mCircleCenterX + mCircleRadius * Math.cos(mAngleEnd));
         mThumbEndY = (int) (mCircleCenterY - mCircleRadius * Math.sin(mAngleEnd));
 
-        mLinePaint.setColor(mArcColor == 0 ? Color.RED : mArcColor);
+        if (mArcStartColor != 0 && mArcEndColor != 0) {
+            LinearGradient gradient = new LinearGradient(0, 0, 0, getHeight(), mArcStartColor, mArcEndColor, mTileMode.getTileMode());
+            mLinePaint.setShader(gradient);
+        } else {
+            mLinePaint.setColor(mArcColor == 0 ? Color.RED : mArcColor);
+        }
         mLinePaint.setStyle(Paint.Style.STROKE);
         mLinePaint.setStrokeWidth(mArcDashSize);
         mLinePaint.setAntiAlias(true);
